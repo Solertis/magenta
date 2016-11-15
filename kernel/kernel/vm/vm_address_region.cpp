@@ -95,13 +95,13 @@ status_t VmAddressRegion::CreateSubVmarInternal(vaddr_t offset, size_t size, uin
         return ERR_ACCESS_DENIED;
     }
 
-    vaddr_t new_base = base_ + offset;
     if (offset >= size_ || size > size_ - offset) {
         return ERR_INVALID_ARGS;
     }
 
+    vaddr_t new_base = base_ + offset;
     if (is_specific) {
-        if (IsRangeAvailable(new_base, size)) {
+        if (!IsRangeAvailable(new_base, size)) {
             return ERR_NO_MEMORY;
         }
     } else {
@@ -291,7 +291,7 @@ bool VmAddressRegion::IsRangeAvailable(vaddr_t base, size_t size) {
         safeint::CheckedNumeric<vaddr_t> prev_last_byte = prev->base();
         prev_last_byte += prev->size() - 1;
         if (!prev_last_byte.IsValid() || prev_last_byte.ValueOrDie() >= base) {
-            return true;
+            return false;
         }
     }
 
@@ -299,10 +299,10 @@ bool VmAddressRegion::IsRangeAvailable(vaddr_t base, size_t size) {
         safeint::CheckedNumeric<vaddr_t> last_byte = base;
         last_byte += size - 1;
         if (!last_byte.IsValid() || next->base() <= last_byte.ValueOrDie()) {
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 }
 
 bool VmAddressRegion::CheckGap(const ChildList::iterator& prev, const ChildList::iterator& next,
